@@ -27,8 +27,6 @@ class TodoCell: UITableViewCell {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         formatter.dateStyle = .short
-        todoDateLabel.text = "Created At: \(formatter.string(from: todo.dateCreated))"
+        todoDateLabel.text = "Created At: \(formatter.string(from: todo.createdDate))"
     }
-    
-
 }

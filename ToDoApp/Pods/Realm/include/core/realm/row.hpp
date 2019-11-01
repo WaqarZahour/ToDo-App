@@ -129,6 +129,7 @@ public:
     void move_last_over();
     //@}
 
+    size_t get_backlink_count() const noexcept;
     size_t get_backlink_count(const Table& src_table, size_t src_col_ndx) const noexcept;
     size_t get_backlink(const Table& src_table, size_t src_col_ndx, size_t backlink_ndx) const noexcept;
 
@@ -235,7 +236,7 @@ class Group;
 class RowBase {
 protected:
     TableRef m_table; // nullptr if detached.
-    size_t m_row_ndx; // Undefined if detached.
+    size_t m_row_ndx = -1; // Undefined if detached.
 
     void attach(Table*, size_t row_ndx) noexcept;
     void reattach(Table*, size_t row_ndx) noexcept;
@@ -643,6 +644,12 @@ template <class T, class R>
 inline void RowFuncs<T, R>::move_last_over()
 {
     table()->move_last_over(row_ndx()); // Throws
+}
+
+template <class T, class R>
+inline size_t RowFuncs<T, R>::get_backlink_count() const noexcept
+{
+    return table()->get_backlink_count(row_ndx());
 }
 
 template <class T, class R>

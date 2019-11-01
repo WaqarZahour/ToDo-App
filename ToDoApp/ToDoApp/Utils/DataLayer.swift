@@ -52,7 +52,7 @@ class DataLayer {
             realm.delete(todo)
         }
     }
-    
+
     /// In this fucntion we'll update todo object and save it in the database
     ///
     /// - Parameters:
@@ -61,10 +61,6 @@ class DataLayer {
         try! realm.write {
             todo.name = (dataDict[NAME] as? String)!
             todo.priority = (dataDict[PRIORITY] as? String)!
-            todo.priority = (dataDict[PRIORITY] as? String)!
         }
     }
-    
-    
-
 }

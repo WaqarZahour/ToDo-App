@@ -8,7 +8,8 @@
 
 import UIKit
 import RealmSwift
-class TodoVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
+
+class TodoVC: UIViewController {
 
     // MARK: IBOoutlet and Other Properties
     @IBOutlet weak var tableView: UITableView!
@@ -27,11 +28,7 @@ class TodoVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UISe
         
         searchBar.delegate = self
         todos = DataLayer.instance.getAll()
-        todos = todos?.sorted(byKeyPath: DATE_CREATED, ascending: false)
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        tableView.reloadData()
+        todos = todos?.sorted(byKeyPath: CREATED_DATE, ascending: false)
     }
 
     /// In a storyboard-based application, you will often want to do a little preparation before navigation
@@ -45,9 +42,39 @@ class TodoVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UISe
                 if let todo = sender as? Todo {
                     destination.todo = todo
                 }
+                destination.delegate = self
             }
         }
     }
+    
+    // MARK: Button Actions
+    /// This function called when user press on the + button
+    ///
+    /// - Parameters
+    ///     sender: pass button reference
+    @IBAction func addNewTask(_ sender: Any) {
+        performSegue(withIdentifier: Identifier.DetailVC.rawValue, sender: nil)
+    }
+    
+    /// In this fucntions when segment change the value sort todos accordingly
+    ///
+    /// - Parameters
+    ///     sender: pass segemented control reference
+    @IBAction func segmentChange(_ sender: AnyObject) {
+        let filter = Filter(rawValue: segment.selectedSegmentIndex)
+        switch filter {
+        case .CreatedDate:
+            todos = todos?.sorted(byKeyPath: CREATED_DATE, ascending: false)
+        case .Priority:
+            todos = todos?.sorted(byKeyPath: PRIORITY, ascending: true)
+        default:
+            break
+        }
+        tableView.reloadData()
+    }
+}
+
+extension TodoVC: UITableViewDelegate, UITableViewDataSource {
     
     // MARK: TableView Delegate and Datasource
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -75,6 +102,9 @@ class TodoVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UISe
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: Identifier.DetailVC.rawValue, sender: (self.todos?[indexPath.row])!)
     }
+}
+
+extension TodoVC: UISearchBarDelegate {
     
     // MARK: SearchBar Delegate
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
@@ -94,20 +124,10 @@ class TodoVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UISe
             tableView.reloadData()
         }
     }
-    
-    // MARK: Button Actions
-    /// In this fucntions when segment change the value sort todos accordingly
-    ///
-    /// - Parameters
-    ///     sender: pass button reference
-    @IBAction func segmentChange(_ sender: AnyObject) {
-        if segment.selectedSegmentIndex == 0 {
-            todos = todos?.sorted(byKeyPath: DATE_CREATED, ascending: false)
-        } else if segment.selectedSegmentIndex == 1 {
-            todos = todos?.sorted(byKeyPath: PRIORITY, ascending: true)
-        }
-        tableView.reloadData()
-        
-    }
 }
 
+extension TodoVC: DBObjectModiy{
+    func refreshUI() {
+        self.tableView.reloadData()
+    }
+}

@@ -19,8 +19,6 @@
 #ifndef REALM_THREAD_SAFE_REFERENCE_HPP
 #define REALM_THREAD_SAFE_REFERENCE_HPP
 
-#include "descriptor_ordering.hpp"
-
 #include <realm/group_shared.hpp>
 
 namespace realm {
@@ -33,6 +31,7 @@ class Results;
 class TableView;
 template<typename T> class BasicRow;
 typedef BasicRow<Table> Row;
+namespace _impl { class RealmCoordinator; }
 
 // Opaque type representing an object for handover
 class ThreadSafeReferenceBase {
@@ -66,23 +65,14 @@ private:
 };
 
 template <typename T>
-class ThreadSafeReference: public ThreadSafeReferenceBase {
-private:
-    friend Realm;
-
-    // Precondition: The associated Realm is for the current thread and is not in a write transaction;.
-    ThreadSafeReference(T value);
-
-    // Precondition: Realm and handover are on same version
-    T import_into_realm(std::shared_ptr<Realm> realm) &&;
-};
+class ThreadSafeReference;
 
 template<>
 class ThreadSafeReference<List>: public ThreadSafeReferenceBase {
-private:
-    friend Realm;
+    friend class Realm;
 
     std::unique_ptr<SharedGroup::Handover<LinkView>> m_link_view;
+    std::unique_ptr<SharedGroup::Handover<Table>> m_table;
 
     // Precondition: The associated Realm is for the current thread and is not in a write transaction;.
     ThreadSafeReference(List const& value);
@@ -93,8 +83,7 @@ private:
 
 template<>
 class ThreadSafeReference<Object>: public ThreadSafeReferenceBase {
-private:
-    friend Realm;
+    friend class Realm;
 
     std::unique_ptr<SharedGroup::Handover<Row>> m_row;
     std::string m_object_schema_name;
@@ -108,8 +97,7 @@ private:
 
 template<>
 class ThreadSafeReference<Results>: public ThreadSafeReferenceBase {
-private:
-    friend Realm;
+    friend class Realm;
 
     std::unique_ptr<SharedGroup::Handover<Query>> m_query;
     DescriptorOrdering::HandoverPatch m_ordering_patch;
@@ -119,6 +107,24 @@ private:
 
     // Precondition: Realm and handover are on same version.
     Results import_into_realm(std::shared_ptr<Realm> realm) &&;
+};
+
+template<>
+class ThreadSafeReference<Realm> {
+    friend class Realm;
+    friend class _impl::RealmCoordinator;
+
+    std::shared_ptr<Realm> m_realm;
+
+    ThreadSafeReference(std::shared_ptr<Realm>);
+    std::shared_ptr<Realm> resolve() &&;
+public:
+
+    ThreadSafeReference() = default;
+    ThreadSafeReference(ThreadSafeReference const&) = delete;
+    ThreadSafeReference(ThreadSafeReference &&) = default;
+    ThreadSafeReference& operator=(ThreadSafeReference const&) = delete;
+    ThreadSafeReference& operator=(ThreadSafeReference&&) = default;
 };
 }
 

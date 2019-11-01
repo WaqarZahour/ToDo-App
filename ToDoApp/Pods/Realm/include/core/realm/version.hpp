@@ -21,18 +21,12 @@
 
 #include <string>
 
-#include <realm/util/features.h>
+#ifndef REALM_VERSION_MAJOR
+#include <realm/version_numbers.hpp>
+#endif
 
-
-#define REALM_VER_MAJOR 2
-#define REALM_VER_MINOR 8
-#define REALM_VER_PATCH 1
-#define REALM_VER_EXTRA ""
 #define REALM_PRODUCT_NAME "realm-core"
-
-#define REALM_VER_STRING                                                                                             \
-    REALM_QUOTE(REALM_VER_MAJOR) "." REALM_QUOTE(REALM_VER_MINOR) "." REALM_QUOTE(REALM_VER_PATCH)
-#define REALM_VER_CHUNK "[" REALM_PRODUCT_NAME "-" REALM_VER_STRING "]"
+#define REALM_VER_CHUNK "[" REALM_PRODUCT_NAME "-" REALM_VERSION_STRING "]"
 
 namespace realm {
 
@@ -45,18 +39,9 @@ class StringData;
 
 class Version {
 public:
-    static int get_major()
-    {
-        return REALM_VER_MAJOR;
-    }
-    static int get_minor()
-    {
-        return REALM_VER_MINOR;
-    }
-    static int get_patch()
-    {
-        return REALM_VER_PATCH;
-    }
+    static int get_major() { return REALM_VERSION_MAJOR; }
+    static int get_minor() { return REALM_VERSION_MINOR; }
+    static int get_patch() { return REALM_VERSION_PATCH; }
     static StringData get_extra();
     static std::string get_version();
     static bool is_at_least(int major, int minor, int patch, StringData extra);

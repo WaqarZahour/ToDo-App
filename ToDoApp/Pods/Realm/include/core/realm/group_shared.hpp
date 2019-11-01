@@ -19,22 +19,17 @@
 #ifndef REALM_GROUP_SHARED_HPP
 #define REALM_GROUP_SHARED_HPP
 
-#ifdef REALM_DEBUG
-#include <ctime> // usleep()
-#endif
-
 #include <functional>
 #include <limits>
 #include <realm/util/features.h>
 #include <realm/util/thread.hpp>
-#ifndef _WIN32
 #include <realm/util/interprocess_condvar.hpp>
-#endif
 #include <realm/util/interprocess_mutex.hpp>
 #include <realm/group.hpp>
 #include <realm/group_shared_options.hpp>
 #include <realm/handover_defs.hpp>
 #include <realm/impl/transact_log.hpp>
+#include <realm/metrics/metrics.hpp>
 #include <realm/replication.hpp>
 #include <realm/version_id.hpp>
 
@@ -54,10 +49,15 @@ struct IncompatibleLockFile : std::runtime_error {
     }
 };
 
-/// Thrown by SharedGroup::open() if the realm database was generated with a
-/// format for Realm Mobile Platform but is being opened as a Realm Mobile
-/// Database or vice versa, or of the history schema in the Realm file could not
-/// be upgraded to the needed version.
+/// Thrown by SharedGroup::open() if the type of history
+/// (Replication::HistoryType) in the opened Realm file is incompatible with the
+/// mode in which the Realm file is opened. For example, if there is a mismatch
+/// between the history type in the file, and the history type associated with
+/// the replication plugin passed to SharedGroup::open().
+///
+/// This exception will also be thrown if the history schema version is lower
+/// than required, and no migration is possible
+/// (Replication::is_upgradable_history_schema()).
 struct IncompatibleHistories : util::File::AccessError {
     IncompatibleHistories(const std::string& msg, const std::string& path)
         : util::File::AccessError("Incompatible histories. " + msg, path)
@@ -223,6 +223,9 @@ public:
     /// on an unattached instance results in undefined behavior.
     bool is_attached() const noexcept;
 
+#ifdef REALM_DEBUG
+    /// Deprecated method, only called from a unit test
+    ///
     /// Reserve disk space now to avoid allocation errors at a later
     /// point in time, and to minimize on-disk fragmentation. In some
     /// cases, less fragmentation translates into improved
@@ -235,14 +238,12 @@ public:
     /// default). If the file is already bigger than the specified
     /// size, the size will be unchanged, and on-disk allocation will
     /// occur only for the initial section that corresponds to the
-    /// specified size. On systems that do not support preallocation,
-    /// this function has no effect. To know whether preallocation is
-    /// supported by Realm on your platform, call
-    /// util::File::is_prealloc_supported().
+    /// specified size.
     ///
     /// It is an error to call this function on an unattached shared
     /// group. Doing so will result in undefined behavior.
     void reserve(size_t size_in_bytes);
+#endif
 
     /// Querying for changes:
     ///
@@ -368,8 +369,11 @@ public:
     // by compact(). This may not correspond to the space which is free
     // at the point where get_stats() is called, since that will include
     // memory required to hold older versions of data, which still
-    // needs to be available.
-    void get_stats(size_t& free_space, size_t& used_space);
+    // needs to be available. The locked space is the amount of memory
+    // that is free in current version, but being used in still live versions.
+    // Notice that we will always have two live versions - the current and the
+    // previous.
+    void get_stats(size_t& free_space, size_t& used_space, util::Optional<size_t&> locked_space = util::none) const;
     //@}
 
     enum TransactStage {
@@ -390,6 +394,15 @@ public:
     /// a read transaction will not immediately release any versions.
     uint_fast64_t get_number_of_versions();
 
+    /// Get the approximate size of the data that would be written to the file if
+    /// a commit were done at this point. The reported size will always be bigger
+    /// than what will eventually be needed as we reserve a bit more memory that
+    /// will be needed.
+    size_t get_commit_size() const;
+
+    /// Get the size of the currently allocated slab area
+    size_t get_allocated_size() const;
+
     /// Compact the database file.
     /// - The method will throw if called inside a transaction.
     /// - The method will throw if called in unattached state.
@@ -406,13 +419,18 @@ public:
     /// The name of the temporary file is formed by appending
     /// ".tmp_compaction_space" to the name of the database
     ///
+    /// If the output_encryption_key is `none` then the file's existing key will
+    /// be used (if any). If the output_encryption_key is nullptr, the resulting
+    /// file will be unencrypted. Any other value will change the encryption of
+    /// the file to the new 64 byte key.
+    ///
     /// FIXME: This function is not yet implemented in an exception-safe manner,
     /// therefore, if it throws, the application should not attempt to
     /// continue. If may not even be safe to destroy the SharedGroup object.
     ///
     /// WARNING / FIXME: compact() should NOT be exposed publicly on Windows
     /// because it's not crash safe! It may corrupt your database if something fails
-    bool compact();
+    bool compact(bool bump_version_number = false, util::Optional<const char*> output_encryption_key = util::none);
 
 #ifdef REALM_DEBUG
     void test_ringbuf();
@@ -527,6 +545,25 @@ public:
     // Release pinned version (not thread safe)
     void unpin_version(VersionID version);
 
+    std::shared_ptr<metrics::Metrics> get_metrics();
+
+    // Try to grab a exclusive lock of the given realm path's lock file. If the lock
+    // can be acquired, the callback will be executed with the lock and then return true.
+    // Otherwise false will be returned directly.
+    // The lock taken precludes races with other threads or processes accessing the
+    // files through a SharedGroup.
+    // It is safe to delete/replace realm files inside the callback.
+    // WARNING: It is not safe to delete the lock file in the callback.
+    using CallbackWithLock = std::function<void(const std::string& realm_path)>;
+    static bool call_with_lock(const std::string& realm_path, CallbackWithLock callback);
+
+    // Return a list of files/directories core may use of the given realm file path.
+    // The first element of the pair in the returned list is the path string, the
+    // second one is to indicate the path is a directory or not.
+    // The temporary files are not returned by this function.
+    // It is safe to delete those returned files/directories in the call_with_lock's callback.
+    static std::vector<std::pair<std::string, bool>> get_core_files(const std::string& realm_path);
+
 private:
     struct SharedInfo;
     struct ReadCount;
@@ -540,6 +577,7 @@ private:
 
     // Member variables
     size_t m_free_space = 0;
+    size_t m_locked_space = 0;
     size_t m_used_space = 0;
     Group m_group;
     ReadLockInfo m_read_lock;
@@ -559,7 +597,6 @@ private:
     util::InterprocessMutex m_balancemutex;
 #endif
     util::InterprocessMutex m_controlmutex;
-#ifndef _WIN32
 #ifdef REALM_ASYNC_DAEMON
     util::InterprocessCondVar m_room_to_write;
     util::InterprocessCondVar m_work_to_do;
@@ -567,8 +604,11 @@ private:
 #endif
     util::InterprocessCondVar m_new_commit_available;
     util::InterprocessCondVar m_pick_next_writer;
-#endif
     std::function<void(int, int)> m_upgrade_callback;
+
+#if REALM_METRICS
+    std::shared_ptr<metrics::Metrics> m_metrics;
+#endif // REALM_METRICS
 
     void do_open(const std::string& file, bool no_create, bool is_backend, const SharedGroupOptions options);
 
@@ -610,6 +650,7 @@ private:
     void do_begin_write();
     version_type do_commit();
     void do_end_write() noexcept;
+    void set_transact_stage(TransactStage stage) noexcept;
 
     /// Returns the version of the latest snapshot.
     version_type get_version_of_latest_snapshot();
@@ -659,13 +700,18 @@ private:
     /// finish up the process of starting a write transaction. Internal use only.
     void finish_begin_write();
 
+    void close_internal(std::unique_lock<InterprocessMutex>) noexcept;
     friend class _impl::SharedGroupFriend;
 };
 
 
-inline void SharedGroup::get_stats(size_t& free_space, size_t& used_space) {
+inline void SharedGroup::get_stats(size_t& free_space, size_t& used_space, util::Optional<size_t&> locked_space) const
+{
     free_space = m_free_space;
     used_space = m_used_space;
+    if (locked_space) {
+        *locked_space = m_locked_space;
+    }
 }
 
 
@@ -932,11 +978,14 @@ inline void SharedGroup::advance_read(O* observer, VersionID version_id)
     if (version_id.version < m_read_lock.m_version)
         throw LogicError(LogicError::bad_version);
 
-    _impl::History* hist = get_history(); // Throws
+    Replication* repl = m_group.get_replication();
+    _impl::History* hist = repl ? repl->get_history() : nullptr; // Throws
+
     if (!hist)
         throw LogicError(LogicError::no_history);
 
-    do_advance_read(observer, version_id, *hist); // Throws
+    bool hist_updated = do_advance_read(observer, version_id, *hist); // Throws
+    repl->initiate_transact(Replication::TransactionType::trans_Read, version_id.version, hist_updated);
 }
 
 template <class O>
@@ -957,7 +1006,8 @@ inline void SharedGroup::promote_to_write(O* observer)
         Replication* repl = m_group.get_replication();
         REALM_ASSERT(repl); // Presence of `repl` follows from the presence of `hist`
         version_type current_version = m_read_lock.m_version;
-        repl->initiate_transact(current_version, history_updated); // Throws
+        repl->initiate_transact(Replication::TransactionType::trans_Write, current_version,
+                                history_updated); // Throws
 
         // If the group has no top array (top_ref == 0), create a new node
         // structure for an empty group now, to be ready for modifications. See
@@ -970,7 +1020,7 @@ inline void SharedGroup::promote_to_write(O* observer)
         throw;
     }
 
-    m_transact_stage = transact_Writing;
+    set_transact_stage(transact_Writing);
 }
 
 template <class O>
@@ -982,10 +1032,6 @@ inline void SharedGroup::rollback_and_continue_as_read(O* observer)
     _impl::History* hist = get_history(); // Throws
     if (!hist)
         throw LogicError(LogicError::no_history);
-
-    // Mark all managed space (beyond the attached file) as free.
-    using gf = _impl::GroupFriend;
-    gf::reset_free_space_tracking(m_group); // Throws
 
     BinaryData uncommitted_changes = hist->get_uncommitted_changes();
 
@@ -1003,6 +1049,10 @@ inline void SharedGroup::rollback_and_continue_as_read(O* observer)
         observer->parse_complete();           // Throws
     }
 
+    // Mark all managed space (beyond the attached file) as free.
+    using gf = _impl::GroupFriend;
+    gf::reset_free_space_tracking(m_group); // Throws
+
     ref_type top_ref = m_read_lock.m_top_ref;
     size_t file_size = m_read_lock.m_file_size;
     _impl::ReversedNoCopyInputStream reversed_in(reverser);
@@ -1014,7 +1064,7 @@ inline void SharedGroup::rollback_and_continue_as_read(O* observer)
     REALM_ASSERT(repl); // Presence of `repl` follows from the presence of `hist`
     repl->abort_transact();
 
-    m_transact_stage = transact_Reading;
+    set_transact_stage(transact_Reading);
 }
 
 template <class O>
@@ -1025,7 +1075,7 @@ inline bool SharedGroup::do_advance_read(O* observer, VersionID version_id, _imp
     REALM_ASSERT(new_read_lock.m_version >= m_read_lock.m_version);
     if (new_read_lock.m_version == m_read_lock.m_version) {
         release_read_lock(new_read_lock);
-        // _impl::History::update_early_from_top_ref() was not called
+        // _impl::History::update_from_ref() was not called
         return false;
     }
 
@@ -1033,13 +1083,13 @@ inline bool SharedGroup::do_advance_read(O* observer, VersionID version_id, _imp
     {
         version_type new_version = new_read_lock.m_version;
         size_t new_file_size = new_read_lock.m_file_size;
-        ref_type new_top_ref = new_read_lock.m_top_ref;
 
         // Synchronize readers view of the file
         SlabAlloc& alloc = m_group.m_alloc;
         alloc.update_reader_view(new_file_size);
 
-        hist.update_early_from_top_ref(new_version, new_file_size, new_top_ref); // Throws
+        ref_type hist_ref = _impl::GroupFriend::get_history_ref(alloc, new_read_lock.m_top_ref);
+        hist.update_from_ref_and_version(hist_ref, new_version); // Throws
     }
 
     if (observer) {

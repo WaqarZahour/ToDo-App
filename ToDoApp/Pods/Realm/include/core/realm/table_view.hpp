@@ -258,7 +258,7 @@ public:
     size_t find_by_source_ndx(size_t source_ndx) const noexcept;
 
     // Conversion
-    void to_json(std::ostream&) const;
+    void to_json(std::ostream&, size_t link_depth = 0, std::map<std::string, std::string>* renames = nullptr) const;
     void to_string(std::ostream&, size_t limit = 500) const;
     void row_to_string(size_t row_ndx, std::ostream&) const;
 
@@ -297,10 +297,20 @@ public:
     // distinct() will preserve the original order of the row pointers, also if the order is a result of sort()
     // If two rows are indentical (for the given set of distinct-columns), then the last row is removed.
     // You can call sync_if_needed() to update the distinct view, just like you can for a sorted view.
-    // Each time you call distinct() it will first fetch the full original TableView contents and then apply
-    // distinct() on that. So it distinct() does not filter the result of the previous distinct().
+    // Each time you call distinct() it will compound on the previous calls
     void distinct(size_t column);
-    void distinct(SortDescriptor columns);
+    void distinct(DistinctDescriptor columns);
+    void limit(LimitDescriptor limit);
+    void include(IncludeDescriptor include_paths);
+    IncludeDescriptor get_include_descriptors();
+
+    // Replace the order of sort and distinct operations, bypassing manually
+    // calling sort and distinct. This is a convenience method for bindings.
+    void apply_descriptor_ordering(DescriptorOrdering new_ordering);
+
+    // Gets a readable and parsable string which completely describes the sort and
+    // distinct operations applied to this view.
+    std::string get_descriptor_ordering_description() const;
 
     // Returns whether the rows are guaranteed to be in table order.
     // This is true only of unsorted TableViews created from either:
@@ -337,12 +347,8 @@ protected:
     // m_distinct_column_source != npos if this view was created from distinct values in a column of m_table.
     size_t m_distinct_column_source = npos;
 
-    // If not empty, this TableView has had TableView::distinct() called and must
-    // only contain unique rows with respect to that column set of the parent table
-    SortDescriptor m_distinct_predicate;
-
-    SortDescriptor m_sorting_predicate; // Stores sorting criterias (columns + ascending)
-
+    // Stores the ordering criteria of applied sort and distinct operations.
+    DescriptorOrdering m_descriptor_ordering;
 
     // A valid query holds a reference to its table which must match our m_table.
     // hence we can use a query with a null table reference to indicate that the view
@@ -425,6 +431,8 @@ private:
     void adj_row_acc_insert_rows(size_t row_ndx, size_t num_rows) noexcept;
     void adj_row_acc_erase_row(size_t row_ndx) noexcept;
     void adj_row_acc_move_over(size_t from_row_ndx, size_t to_row_ndx) noexcept;
+    void adj_row_acc_swap_rows(size_t row_ndx_1, size_t row_ndx_2) noexcept;
+    void adj_row_acc_move_row(size_t from_row_ndx, size_t to_row_ndx) noexcept;
     void adj_row_acc_clear() noexcept;
 };
 
@@ -726,13 +734,13 @@ inline TableViewBase::TableViewBase(Table* parent)
     allocate_row_indexes();
 }
 
-inline TableViewBase::TableViewBase(Table* parent, Query& query, size_t start, size_t end, size_t limit)
+inline TableViewBase::TableViewBase(Table* parent, Query& query, size_t start, size_t end, size_t lim)
     : RowIndexes(IntegerColumn::unattached_root_tag(), Allocator::get_default()) // Throws
     , m_table(parent->get_table_ref())
     , m_query(query)
     , m_start(start)
     , m_end(end)
-    , m_limit(limit)
+    , m_limit(lim)
     , m_last_seen_version(outside_version())
 {
     allocate_row_indexes();
@@ -777,8 +785,7 @@ inline TableViewBase::TableViewBase(const TableViewBase& tv)
     , m_linked_row(tv.m_linked_row)
     , m_linkview_source(tv.m_linkview_source)
     , m_distinct_column_source(tv.m_distinct_column_source)
-    , m_distinct_predicate(std::move(tv.m_distinct_predicate))
-    , m_sorting_predicate(std::move(tv.m_sorting_predicate))
+    , m_descriptor_ordering(std::move(tv.m_descriptor_ordering))
     , m_query(tv.m_query)
     , m_start(tv.m_start)
     , m_end(tv.m_end)
@@ -796,6 +803,7 @@ inline TableViewBase::TableViewBase(const TableViewBase& tv)
         m_table->register_view(this); // Throws
     m_row_indexes.init_from_mem(alloc, mem);
     ref_guard.release();
+    RowIndexes::m_limit_count = tv.m_limit_count;
 }
 
 inline TableViewBase::TableViewBase(TableViewBase&& tv) noexcept
@@ -805,8 +813,7 @@ inline TableViewBase::TableViewBase(TableViewBase&& tv) noexcept
     , m_linked_row(tv.m_linked_row)
     , m_linkview_source(std::move(tv.m_linkview_source))
     , m_distinct_column_source(tv.m_distinct_column_source)
-    , m_distinct_predicate(std::move(tv.m_distinct_predicate))
-    , m_sorting_predicate(std::move(tv.m_sorting_predicate))
+    , m_descriptor_ordering(std::move(tv.m_descriptor_ordering))
     , m_query(std::move(tv.m_query))
     , m_start(tv.m_start)
     , m_end(tv.m_end)
@@ -817,6 +824,7 @@ inline TableViewBase::TableViewBase(TableViewBase&& tv) noexcept
     m_last_seen_version(tv.m_last_seen_version)
     , m_num_detached_refs(tv.m_num_detached_refs)
 {
+    RowIndexes::m_limit_count = tv.m_limit_count;
     if (m_table)
         m_table->move_registered_view(&tv, this);
 }
@@ -839,6 +847,7 @@ inline TableViewBase& TableViewBase::operator=(TableViewBase&& tv) noexcept
         m_table->move_registered_view(&tv, this);
 
     m_row_indexes.move_assign(tv.m_row_indexes);
+    m_limit_count = tv.m_limit_count;
     m_query = std::move(tv.m_query);
     m_num_detached_refs = tv.m_num_detached_refs;
     m_last_seen_version = tv.m_last_seen_version;
@@ -848,9 +857,8 @@ inline TableViewBase& TableViewBase::operator=(TableViewBase&& tv) noexcept
     m_linked_column = tv.m_linked_column;
     m_linked_row = tv.m_linked_row;
     m_linkview_source = std::move(tv.m_linkview_source);
-    m_distinct_predicate = std::move(tv.m_distinct_predicate);
+    m_descriptor_ordering = std::move(tv.m_descriptor_ordering);
     m_distinct_column_source = tv.m_distinct_column_source;
-    m_sorting_predicate = std::move(tv.m_sorting_predicate);
 
     return *this;
 }
@@ -874,6 +882,7 @@ inline TableViewBase& TableViewBase::operator=(const TableViewBase& tv)
     m_row_indexes.destroy();
     m_row_indexes.get_root_array()->init_from_mem(mem);
     ref_guard.release();
+    m_limit_count = tv.m_limit_count;
 
     m_query = tv.m_query;
     m_num_detached_refs = tv.m_num_detached_refs;
@@ -884,9 +893,8 @@ inline TableViewBase& TableViewBase::operator=(const TableViewBase& tv)
     m_linked_column = tv.m_linked_column;
     m_linked_row = tv.m_linked_row;
     m_linkview_source = tv.m_linkview_source;
-    m_distinct_predicate = tv.m_distinct_predicate;
+    m_descriptor_ordering = tv.m_descriptor_ordering;
     m_distinct_column_source = tv.m_distinct_column_source;
-    m_sorting_predicate = tv.m_sorting_predicate;
 
     return *this;
 }
@@ -1211,8 +1219,8 @@ inline TableView::TableView(Table& parent)
 {
 }
 
-inline TableView::TableView(Table& parent, Query& query, size_t start, size_t end, size_t limit)
-    : TableViewBase(&parent, query, start, end, limit)
+inline TableView::TableView(Table& parent, Query& query, size_t start, size_t end, size_t lim)
+    : TableViewBase(&parent, query, start, end, lim)
 {
 }
 

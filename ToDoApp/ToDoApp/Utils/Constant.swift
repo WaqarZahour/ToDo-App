@@ -8,7 +8,7 @@
 
 import Foundation
 
-let DATE_CREATED = "dateCreated"
+let CREATED_DATE = "createdDate"
 let ERROR_MESSAGE = "Error Message"
 let NAME = "name"
 let NAME_ERROR = "Please enter the name"
@@ -18,4 +18,9 @@ let PRIORITY = "priority"
 enum Identifier: String {
     case TodoCell
     case DetailVC
+}
+
+enum Filter: Int {
+    case CreatedDate = 0
+    case Priority
 }

@@ -126,7 +126,7 @@ extension TodoVC: UISearchBarDelegate {
     }
 }
 
-extension TodoVC: DBObjectModiy{
+extension TodoVC: DBObjectModiy {
     func refreshUI() {
         self.tableView.reloadData()
     }

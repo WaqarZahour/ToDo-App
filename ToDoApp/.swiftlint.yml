@@ -1,0 +1,12 @@
+disabled_rules: # rule identifiers to exclude from running
+ - trailing_whitespace
+ - force_try
+ 
+excluded: # paths to ignore during linting. Takes precedence over `included`.
+ - Pods
+ 
+line_length: 300
+function_body_length: 55
+force_cast: warning
+file_length: 400
+type_body_length: 250

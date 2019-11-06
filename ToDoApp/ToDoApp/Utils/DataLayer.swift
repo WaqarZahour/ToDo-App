@@ -12,7 +12,7 @@ import RealmSwift
 class DataLayer {
     // MARK: Singleton Implemention
     static let instance = DataLayer()
-    private init(){}
+    private init() {}
     
     let realm = try! Realm()
     
@@ -37,7 +37,7 @@ class DataLayer {
     ///
     /// - Parameters:
     ///     - todo: object of Todo Class
-    func create(todo:Todo) {
+    func create(todo: Todo) {
         try! realm.write {
             realm.add(todo)
         }
@@ -47,7 +47,7 @@ class DataLayer {
     ///
     /// - Parameters:
     ///     - todo: object of Todo Class
-    func delete(todo:Todo) {
+    func delete(todo: Todo) {
         try! realm.write {
             realm.delete(todo)
         }
@@ -57,7 +57,7 @@ class DataLayer {
     ///
     /// - Parameters:
     ///     - todo: object of Todo Class
-    func update(todo:Todo, dataDict: Dictionary<String, Any>) {
+    func update(todo: Todo, dataDict: [String: Any]) {
         try! realm.write {
             todo.name = (dataDict[NAME] as? String)!
             todo.priority = (dataDict[PRIORITY] as? String)!

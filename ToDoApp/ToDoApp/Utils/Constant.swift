@@ -8,19 +8,19 @@
 
 import Foundation
 
-let CREATED_DATE = "createdDate"
-let ERROR_MESSAGE = "Error Message"
+let CREATEDDATE = "createdDate"
+let ERRORMESSAGE = "Error Message"
 let NAME = "name"
-let NAME_ERROR = "Please enter the name"
+let NAMEERROR = "Please enter the name"
 let OKAY = "Okay"
 let PRIORITY = "priority"
 
 enum Identifier: String {
-    case TodoCell
-    case DetailVC
+    case todoCell
+    case detailVC
 }
 
 enum Filter: Int {
-    case CreatedDate = 0
-    case Priority
+    case createdDate = 0
+    case priority
 }

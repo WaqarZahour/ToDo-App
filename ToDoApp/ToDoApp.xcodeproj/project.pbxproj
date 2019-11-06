@@ -147,6 +147,7 @@
 				8520783D1F84FC9C00C6E313 /* Frameworks */,
 				8520783E1F84FC9C00C6E313 /* Resources */,
 				3CBCC9332912C8679BADB20A /* [CP] Embed Pods Frameworks */,
+				850B0F1C23733CB3001D97C5 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -225,6 +226,23 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ToDoApp/Pods-ToDoApp-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		850B0F1C23733CB3001D97C5 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${PODS_ROOT}/SwiftLint/swiftlint\"\n";
 		};
 		97A806F5B29E89D4434DF21A /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;

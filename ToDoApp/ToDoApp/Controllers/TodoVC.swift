@@ -19,7 +19,7 @@ class TodoVC: UIViewController {
     var todos: Results<Todo>?
     var isSearchMode = false
     
-    // MARK: View Override functions
+    // MARK: View View LifeCycle
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -28,7 +28,7 @@ class TodoVC: UIViewController {
         
         searchBar.delegate = self
         todos = DataLayer.instance.getAll()
-        todos = todos?.sorted(byKeyPath: CREATED_DATE, ascending: false)
+        todos = todos?.sorted(byKeyPath: CREATEDDATE, ascending: false)
     }
 
     /// In a storyboard-based application, you will often want to do a little preparation before navigation
@@ -37,7 +37,7 @@ class TodoVC: UIViewController {
     ///   - segue: to navigate from one screen to antother
     ///   - sender: is todo object
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == Identifier.DetailVC.rawValue {
+        if segue.identifier == Identifier.detailVC.rawValue {
             if let destination = segue.destination as? DetailVC {
                 if let todo = sender as? Todo {
                     destination.todo = todo
@@ -53,7 +53,7 @@ class TodoVC: UIViewController {
     /// - Parameters
     ///     sender: pass button reference
     @IBAction func addNewTask(_ sender: Any) {
-        performSegue(withIdentifier: Identifier.DetailVC.rawValue, sender: nil)
+        performSegue(withIdentifier: Identifier.detailVC.rawValue, sender: nil)
     }
     
     /// In this fucntions when segment change the value sort todos accordingly
@@ -63,9 +63,9 @@ class TodoVC: UIViewController {
     @IBAction func segmentChange(_ sender: AnyObject) {
         let filter = Filter(rawValue: segment.selectedSegmentIndex)
         switch filter {
-        case .CreatedDate:
-            todos = todos?.sorted(byKeyPath: CREATED_DATE, ascending: false)
-        case .Priority:
+        case .createdDate:
+            todos = todos?.sorted(byKeyPath: CREATEDDATE, ascending: false)
+        case .priority:
             todos = todos?.sorted(byKeyPath: PRIORITY, ascending: true)
         default:
             break
@@ -78,17 +78,18 @@ extension TodoVC: UITableViewDelegate, UITableViewDataSource {
     
     // MARK: TableView Delegate and Datasource
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: Identifier.TodoCell.rawValue, for: indexPath) as! TodoCell
-        cell.configureCell(todo: (self.todos?[indexPath.row])!)
+        let cell = tableView.dequeueReusableCell(withIdentifier: Identifier.todoCell.rawValue, for: indexPath) as! TodoCell
+        if let todos = todos {
+            cell.configureCell(todo: (todos[indexPath.row]))
+        }
         return cell
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if let todos = todos {
-            return todos.count
-        } else {
+        guard let todos = todos else {
             return 0
         }
+        return todos.count
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -100,7 +101,9 @@ extension TodoVC: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        performSegue(withIdentifier: Identifier.DetailVC.rawValue, sender: (self.todos?[indexPath.row])!)
+        if let todos = todos {
+            performSegue(withIdentifier: Identifier.detailVC.rawValue, sender: (todos[indexPath.row]))
+        }
     }
 }
 
@@ -127,6 +130,8 @@ extension TodoVC: UISearchBarDelegate {
 }
 
 extension TodoVC: DBObjectModiy {
+    
+    // MARK: DBObjectModiy Delegate
     func refreshUI() {
         self.tableView.reloadData()
     }

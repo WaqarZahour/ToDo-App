@@ -23,7 +23,7 @@ class DetailVC: UIViewController {
     var todo: Todo?
     weak var delegate: DBObjectModiy?
     
-    // MARK: View Override functions
+    // MARK: View LifeCycle
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -31,12 +31,13 @@ class DetailVC: UIViewController {
         pickerView.delegate = self
         pickerView.dataSource = self
         
-        if todo != nil {
-            nameField.text = todo!.name
-            pickerView.selectRow(priorities.firstIndex(of: todo!.priority)!, inComponent: 0, animated: true)
-        } else {
+        guard let todo = todo else {
             deleteButton.isHidden = true
+            return
         }
+        
+        nameField.text = todo.name
+        pickerView.selectRow(priorities.firstIndex(of: todo.priority) ?? 0, inComponent: 0, animated: true)
     }
     
     // MARK: Button Actions
@@ -53,8 +54,10 @@ class DetailVC: UIViewController {
     /// - Parameters
     ///     sender: pass button reference
     @IBAction func deleteButtonPressed(_ sender: Any) {
-        DataLayer.instance.delete(todo: todo!)
-        delegate?.refreshUI()
+        if let todo = todo {
+            DataLayer.instance.delete(todo: todo)
+            delegate?.refreshUI()
+        }
         dismiss(animated: true, completion: nil)
     }
     
@@ -63,20 +66,20 @@ class DetailVC: UIViewController {
     /// - Parameters
     ///     sender: pass button reference
     @IBAction func saveButtonPressed(_ sender: Any) {
-        if nameField.text!.isEmpty {
-            let alertController = UIAlertController(title: ERROR_MESSAGE, message: NAME_ERROR, preferredStyle: .alert)
-            let okayAction = UIAlertAction(title: OKAY, style: .default, handler:nil)
+        if let nameText = nameField.text, nameText.isEmpty {
+            let alertController = UIAlertController(title: ERRORMESSAGE, message: NAMEERROR, preferredStyle: .alert)
+            let okayAction = UIAlertAction(title: OKAY, style: .default, handler: nil)
             alertController.addAction(okayAction)
             present(alertController, animated: true, completion: nil)
             return
         }
-        if todo != nil {
-            let dict = [NAME:nameField.text!, PRIORITY: priorities[pickerView.selectedRow(inComponent: 0)]]
-            DataLayer.instance.update(todo: todo!, dataDict: dict)
+        if let todo = todo {
+            let dict = [NAME: nameField.text ?? "", PRIORITY: priorities[pickerView.selectedRow(inComponent: 0)]]
+            DataLayer.instance.update(todo: todo, dataDict: dict)
             delegate?.refreshUI()
         } else {
             let todo = Todo()
-            todo.name = nameField.text!
+            todo.name = nameField.text ?? ""
             todo.priority = priorities[pickerView.selectedRow(inComponent: 0)]
             todo.createdDate = Date()
             DataLayer.instance.create(todo: todo)

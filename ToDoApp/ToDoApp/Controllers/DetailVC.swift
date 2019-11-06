@@ -40,6 +40,10 @@ class DetailVC: UIViewController {
         pickerView.selectRow(priorities.firstIndex(of: todo.priority) ?? 0, inComponent: 0, animated: true)
     }
     
+    deinit {
+        print("DetailVC de-initialized")
+    }
+    
     // MARK: Button Actions
     /// In this function move back to the main screen
     ///

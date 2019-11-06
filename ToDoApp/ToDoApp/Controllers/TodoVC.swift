@@ -31,6 +31,9 @@ class TodoVC: UIViewController {
         todos = todos?.sorted(byKeyPath: CREATEDDATE, ascending: false)
     }
 
+    deinit {
+        print("TodoVC de-initialized")
+    }
     /// In a storyboard-based application, you will often want to do a little preparation before navigation
     ///
     /// - Parameters:

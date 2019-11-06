@@ -16,8 +16,8 @@ let OKAY = "Okay"
 let PRIORITY = "priority"
 
 enum Identifier: String {
-    case todoCell
-    case detailVC
+    case todoCell = "TodoCell"
+    case detailVC = "DetailVC"
 }
 
 enum Filter: Int {

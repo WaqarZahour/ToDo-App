@@ -27,6 +27,7 @@ class TodoVC: UIViewController {
         tableView.dataSource = self
         
         searchBar.delegate = self
+        
         todos = DataLayer.instance.getAll()
         todos = todos?.sorted(byKeyPath: CREATEDDATE, ascending: false)
     }
@@ -132,7 +133,7 @@ extension TodoVC: UISearchBarDelegate {
     }
 }
 
-extension TodoVC: DBObjectModiy {
+extension TodoVC: DBObjectModify {
     
     // MARK: DBObjectModiy Delegate
     func refreshUI() {

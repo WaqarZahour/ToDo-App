@@ -8,7 +8,7 @@
 
 import UIKit
 
-protocol DBObjectModiy: class {
+protocol DBObjectModify: class {
     func refreshUI()
 }
 
@@ -19,9 +19,9 @@ class DetailVC: UIViewController {
     @IBOutlet weak var nameField: UITextField!
     @IBOutlet weak var deleteButton: UIButton!
     
-    let priorities = ["Low", "Intermediate", "High"]
+    var priorities = [String]()
     var todo: Todo?
-    weak var delegate: DBObjectModiy?
+    weak var delegate: DBObjectModify?
     
     // MARK: View LifeCycle
     override func viewDidLoad() {
@@ -30,6 +30,10 @@ class DetailVC: UIViewController {
         // Do any additional setup after loading the view.
         pickerView.delegate = self
         pickerView.dataSource = self
+        
+        for priority in Priorities.allCases {
+            priorities.append(priority.rawValue)
+        }
         
         guard let todo = todo else {
             deleteButton.isHidden = true

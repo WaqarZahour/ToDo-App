@@ -23,10 +23,6 @@ class TodoCell: UITableViewCell {
     func configureCell(todo: Todo) {
         todoNameLabel.text = todo.name
         todoPriorityLabel.text = "Priority: \(todo.priority)"
-        
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        formatter.dateStyle = .short
-        todoDateLabel.text = "Created At: \(formatter.string(from: todo.createdDate))"
+        todoDateLabel.text = "Created At: \(DateFormatter.created.string(from: todo.createdDate))"
     }
 }

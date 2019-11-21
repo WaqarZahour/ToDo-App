@@ -13,8 +13,9 @@ You can prioritize your tasks and sort them on the basis of priority or latest o
 - Intital version with Swift 3.0
 
 #### Version 2.0
-- Compatible with Xcode 11
-- Update to Swift 5.0. Pods
+- Compatible with Xcode 11.2.1
+- Update to Swift 5.0
+- Add Swift Lint
 - Code Improvements
 
 ## Reached Me	

@@ -17,6 +17,7 @@
 		852078651F851B6B00C6E313 /* TodoCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 852078641F851B6B00C6E313 /* TodoCell.swift */; };
 		852078671F851B8C00C6E313 /* Constant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 852078661F851B8C00C6E313 /* Constant.swift */; };
 		859864BD236C1C50000E1339 /* Todo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 859864BC236C1C50000E1339 /* Todo.swift */; };
+		85FBFFCD2387231A00544AC1 /* Date+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85FBFFCC2387231A00544AC1 /* Date+Extension.swift */; };
 		E99FE05D1DA813109ADBB31F /* Pods_ToDoApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A3D44B68C3C5B53F64873627 /* Pods_ToDoApp.framework */; };
 /* End PBXBuildFile section */
 
@@ -34,6 +35,7 @@
 		852078641F851B6B00C6E313 /* TodoCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TodoCell.swift; sourceTree = "<group>"; };
 		852078661F851B8C00C6E313 /* Constant.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constant.swift; sourceTree = "<group>"; };
 		859864BC236C1C50000E1339 /* Todo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Todo.swift; sourceTree = "<group>"; };
+		85FBFFCC2387231A00544AC1 /* Date+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extension.swift"; sourceTree = "<group>"; };
 		A3D44B68C3C5B53F64873627 /* Pods_ToDoApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ToDoApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E09DE2C54B1C7ABBEC283931 /* Pods-ToDoApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ToDoApp.debug.xcconfig"; path = "Pods/Target Support Files/Pods-ToDoApp/Pods-ToDoApp.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -131,6 +133,7 @@
 			children = (
 				852078661F851B8C00C6E313 /* Constant.swift */,
 				852078621F85161900C6E313 /* DataLayer.swift */,
+				85FBFFCC2387231A00544AC1 /* Date+Extension.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -176,10 +179,9 @@
 			};
 			buildConfigurationList = 8520783B1F84FC9C00C6E313 /* Build configuration list for PBXProject "ToDoApp" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				English,
 				en,
 				Base,
 			);
@@ -274,6 +276,7 @@
 				852078651F851B6B00C6E313 /* TodoCell.swift in Sources */,
 				852078631F85161900C6E313 /* DataLayer.swift in Sources */,
 				852078601F8504C200C6E313 /* DetailVC.swift in Sources */,
+				85FBFFCD2387231A00544AC1 /* Date+Extension.swift in Sources */,
 				8520785C1F84FFDA00C6E313 /* TodoVC.swift in Sources */,
 				852078441F84FC9C00C6E313 /* AppDelegate.swift in Sources */,
 			);

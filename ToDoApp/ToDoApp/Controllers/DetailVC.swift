@@ -14,7 +14,7 @@ protocol DBObjectModify: class {
 
 class DetailVC: UIViewController {
 
-    // MARK: IBOoutlet and Other Properties
+    // MARK: IBOutlet and Other Properties
     @IBOutlet weak var pickerView: UIPickerView!
     @IBOutlet weak var nameField: UITextField!
     @IBOutlet weak var deleteButton: UIButton!
@@ -23,7 +23,7 @@ class DetailVC: UIViewController {
     var todo: Todo?
     weak var delegate: DBObjectModify?
     
-    // MARK: View LifeCycle
+    // MARK: View Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
 

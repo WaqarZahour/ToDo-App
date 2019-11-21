@@ -11,7 +11,7 @@ import RealmSwift
 
 class TodoVC: UIViewController {
 
-    // MARK: IBOoutlet and Other Properties
+    // MARK: IBOutlet and Other Properties
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
     @IBOutlet weak var segment: UISegmentedControl!
@@ -19,7 +19,7 @@ class TodoVC: UIViewController {
     var todos: Results<Todo>?
     var isSearchMode = false
     
-    // MARK: View View LifeCycle
+    // MARK: View Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -35,6 +35,7 @@ class TodoVC: UIViewController {
     deinit {
         print("TodoVC de-initialized")
     }
+    
     /// In a storyboard-based application, you will often want to do a little preparation before navigation
     ///
     /// - Parameters:
@@ -82,7 +83,10 @@ extension TodoVC: UITableViewDelegate, UITableViewDataSource {
     
     // MARK: TableView Delegate and Datasource
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: Identifier.todoCell.rawValue, for: indexPath) as! TodoCell
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: Identifier.todoCell.rawValue, for: indexPath) as? TodoCell else {
+                fatalError("Unable to deque cell")
+        }
+        
         if let todos = todos {
             cell.configureCell(todo: (todos[indexPath.row]))
         }
@@ -119,17 +123,17 @@ extension TodoVC: UISearchBarDelegate {
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        if searchBar.text == nil || searchBar.text == "" {
+        guard let searchText = searchBar.text, !searchText.isEmpty else {
             isSearchMode = false
             todos = DataLayer.instance.getAll()
             tableView.reloadData()
             view.endEditing(true)
-        } else {
-            isSearchMode = true
-            let searchText = searchBar.text!.lowercased()
-            todos = DataLayer.instance.filterByName(searchText: searchText)
-            tableView.reloadData()
+            return
         }
+        
+        isSearchMode = true
+        todos = DataLayer.instance.filterByName(searchText: searchText.lowercased())
+        tableView.reloadData()
     }
 }
 

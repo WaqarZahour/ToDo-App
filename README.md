@@ -2,6 +2,7 @@
 
 [![Platform](https://img.shields.io/badge/platform-iOS-blue?style=flat)](https://developer.apple.com/ios/)
 [![Swift](https://img.shields.io/badge/Swift-5.0%20|%205.1-yellowgreen?style=flat)](https://developer.apple.com/swift/)
+[![Cocoapods](https://img.shields.io/badge/cocoapods-SwiftLint%20%7C%20RealmSwift-orange?style=flat)](https://cocoapods.org)
 
 This repo perform crud operation with `Realm Database` integration.
 

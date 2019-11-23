@@ -27,10 +27,6 @@ class DetailVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Do any additional setup after loading the view.
-        pickerView.delegate = self
-        pickerView.dataSource = self
-        
         for priority in Priorities.allCases {
             priorities.append(priority.rawValue)
         }
@@ -74,25 +70,22 @@ class DetailVC: UIViewController {
     /// - Parameters
     ///     sender: pass button reference
     @IBAction func saveButtonPressed(_ sender: Any) {
-        if let nameText = nameField.text, nameText.isEmpty {
-            let alertController = UIAlertController(title: ERRORMESSAGE, message: NAMEERROR, preferredStyle: .alert)
-            let okayAction = UIAlertAction(title: OKAY, style: .default, handler: nil)
-            alertController.addAction(okayAction)
-            present(alertController, animated: true, completion: nil)
+        guard let nameText = nameField.text, !nameText.isEmpty else {
+            self.showAlert(title: ERRORMESSAGE, message: NAMEERROR)
             return
         }
+        
         if let todo = todo {
             let dict = [NAME: nameField.text ?? "", PRIORITY: priorities[pickerView.selectedRow(inComponent: 0)]]
             DataLayer.instance.update(todo: todo, dataDict: dict)
-            delegate?.refreshUI()
         } else {
             let todo = Todo()
             todo.name = nameField.text ?? ""
             todo.priority = priorities[pickerView.selectedRow(inComponent: 0)]
             todo.createdDate = Date()
             DataLayer.instance.create(todo: todo)
-            delegate?.refreshUI()
         }
+        delegate?.refreshUI()
         dismiss(animated: true, completion: nil)
     }
 }

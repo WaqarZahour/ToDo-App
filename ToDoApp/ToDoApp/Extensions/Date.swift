@@ -9,6 +9,7 @@
 import Foundation
 
 extension DateFormatter {
+    
     static let created: DateFormatter = {
         let formatter = DateFormatter()
         formatter.timeStyle = .short

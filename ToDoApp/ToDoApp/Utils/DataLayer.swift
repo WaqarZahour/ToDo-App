@@ -10,18 +10,19 @@ import Foundation
 import RealmSwift
 
 class DataLayer {
+    
     // MARK: Singleton Implemention
     static let instance = DataLayer()
     private init() {}
     
-    let realm = try! Realm()
+    let realm = try? Realm()
     
     // MARK: Crud operations
     /// In this function will return all the todos
     ///
     /// - Returns: list of all todos
     func getAll() -> Results<Todo>? {
-        return realm.objects(Todo.self)
+        return realm?.objects(Todo.self)
     }
     
     /// In this function will return the todos on the basis of search text
@@ -30,7 +31,7 @@ class DataLayer {
     ///     - searchText: name you want to search
     /// - Returns: list of filter todos
     func filterByName(searchText: String) -> Results<Todo>? {
-        return realm.objects(Todo.self).filter("name contains '\(searchText)'")
+        return realm?.objects(Todo.self).filter("name contains '\(searchText)'")
     }
     
     /// In this fucntion we'll create todo object and save it in the database
@@ -38,8 +39,8 @@ class DataLayer {
     /// - Parameters:
     ///     - todo: object of Todo Class
     func create(todo: Todo) {
-        try! realm.write {
-            realm.add(todo)
+        try? realm?.write {
+            realm?.add(todo)
         }
     }
     
@@ -48,8 +49,8 @@ class DataLayer {
     /// - Parameters:
     ///     - todo: object of Todo Class
     func delete(todo: Todo) {
-        try! realm.write {
-            realm.delete(todo)
+        try? realm?.write {
+            realm?.delete(todo)
         }
     }
 
@@ -58,9 +59,12 @@ class DataLayer {
     /// - Parameters:
     ///     - todo: object of Todo Class
     func update(todo: Todo, dataDict: [String: Any]) {
-        try! realm.write {
-            todo.name = (dataDict[NAME] as? String)!
-            todo.priority = (dataDict[PRIORITY] as? String)!
+        try? realm?.write {
+            guard let name = dataDict[NAME] as? String, let priority = dataDict[PRIORITY] as? String else {
+                return
+            }
+            todo.name = name
+            todo.priority = priority
         }
     }
 }

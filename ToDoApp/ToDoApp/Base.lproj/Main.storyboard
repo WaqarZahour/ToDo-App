@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14868" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="15505" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="retina6_5" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14824"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15510"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <customFonts key="customFonts">
@@ -76,6 +76,9 @@
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                     <color key="barTintColor" red="0.21176470589999999" green="0.22352941179999999" blue="0.2666666667" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                     <textInputTraits key="textInputTraits"/>
+                                    <connections>
+                                        <outlet property="delegate" destination="BYZ-38-t0r" id="kNM-Qb-C5n"/>
+                                    </connections>
                                 </searchBar>
                                 <prototypes>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="none" indentationWidth="10" reuseIdentifier="TodoCell" rowHeight="126" id="hUB-1u-md4" customClass="TodoCell" customModule="ToDoApp" customModuleProvider="target">
@@ -143,6 +146,10 @@
                                         </connections>
                                     </tableViewCell>
                                 </prototypes>
+                                <connections>
+                                    <outlet property="dataSource" destination="BYZ-38-t0r" id="rqO-CN-x7X"/>
+                                    <outlet property="delegate" destination="BYZ-38-t0r" id="wx5-Af-mjj"/>
+                                </connections>
                             </tableView>
                         </subviews>
                         <color key="backgroundColor" red="0.21176470589999999" green="0.22352941179999999" blue="0.2666666667" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -252,6 +259,10 @@
                                 <constraints>
                                     <constraint firstAttribute="height" constant="125" id="nVM-Qv-AL7"/>
                                 </constraints>
+                                <connections>
+                                    <outlet property="dataSource" destination="ZkC-ZE-s1N" id="k4i-Zj-McU"/>
+                                    <outlet property="delegate" destination="ZkC-ZE-s1N" id="xeS-CE-65J"/>
+                                </connections>
                             </pickerView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Priority" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="fEU-si-Yzf">
                                 <rect key="frame" x="159" y="133" width="96.333333333333314" height="40"/>

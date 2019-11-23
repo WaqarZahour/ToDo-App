@@ -15,12 +15,6 @@ let NAMEERROR = "Please enter the name"
 let OKAY = "Okay"
 let PRIORITY = "priority"
 
-// Cell and StoryBoard Identifier
-enum Identifier: String {
-    case todoCell = "TodoCell"
-    case detailVC = "DetailVC"
-}
-
 // Filter on the basis of priority and date
 enum Filter: Int {
     case createdDate = 0

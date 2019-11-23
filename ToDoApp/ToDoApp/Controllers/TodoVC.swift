@@ -22,12 +22,7 @@ class TodoVC: UIViewController {
     // MARK: View Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-        tableView.delegate = self
-        tableView.dataSource = self
-        
-        searchBar.delegate = self
-        
+    
         todos = DataLayer.instance.getAll()
         todos = todos?.sorted(byKeyPath: CREATEDDATE, ascending: false)
     }
@@ -42,7 +37,7 @@ class TodoVC: UIViewController {
     ///   - segue: to navigate from one screen to antother
     ///   - sender: is todo object
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == Identifier.detailVC.rawValue {
+        if segue.identifier == DetailVC.reuseIdentifier {
             if let destination = segue.destination as? DetailVC {
                 if let todo = sender as? Todo {
                     destination.todo = todo
@@ -58,7 +53,7 @@ class TodoVC: UIViewController {
     /// - Parameters
     ///     sender: pass button reference
     @IBAction func addNewTask(_ sender: Any) {
-        performSegue(withIdentifier: Identifier.detailVC.rawValue, sender: nil)
+        performSegue(withIdentifier: DetailVC.reuseIdentifier, sender: nil)
     }
     
     /// In this fucntions when segment change the value sort todos accordingly
@@ -83,10 +78,7 @@ extension TodoVC: UITableViewDelegate, UITableViewDataSource {
     
     // MARK: TableView Delegate and Datasource
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: Identifier.todoCell.rawValue, for: indexPath) as? TodoCell else {
-                fatalError("Unable to deque cell")
-        }
-        
+        let cell: TodoCell = tableView.dequeueReusableCell(for: indexPath)
         if let todos = todos {
             cell.configureCell(todo: (todos[indexPath.row]))
         }
@@ -110,7 +102,7 @@ extension TodoVC: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if let todos = todos {
-            performSegue(withIdentifier: Identifier.detailVC.rawValue, sender: (todos[indexPath.row]))
+            performSegue(withIdentifier: DetailVC.reuseIdentifier, sender: (todos[indexPath.row]))
         }
     }
 }

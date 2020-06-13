@@ -75,8 +75,7 @@ class TodoVC: UIViewController {
 }
 
 extension TodoVC: UITableViewDelegate, UITableViewDataSource {
-    
-    // MARK: TableView Delegate and Datasource
+    // MARK: TableView Delegate and Data Source
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell: TodoCell = tableView.dequeueReusableCell(for: indexPath)
         if let todos = todos {
@@ -108,7 +107,6 @@ extension TodoVC: UITableViewDelegate, UITableViewDataSource {
 }
 
 extension TodoVC: UISearchBarDelegate {
-    
     // MARK: SearchBar Delegate
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         view.endEditing(true)
@@ -124,13 +122,12 @@ extension TodoVC: UISearchBarDelegate {
         }
         
         isSearchMode = true
-        todos = DataLayer.instance.filterByName(searchText: searchText.lowercased())
+        todos = DataLayer.instance.filterByName(searchText: searchText)
         tableView.reloadData()
     }
 }
 
 extension TodoVC: DBObjectModify {
-    
     // MARK: DBObjectModiy Delegate
     func refreshUI() {
         self.tableView.reloadData()

@@ -31,7 +31,7 @@ class DataLayer {
     ///     - searchText: name you want to search
     /// - Returns: list of filter todos
     func filterByName(searchText: String) -> Results<Todo>? {
-        return realm?.objects(Todo.self).filter("name contains '\(searchText)'")
+        return realm?.objects(Todo.self).filter("name CONTAINS %@", searchText)
     }
     
     /// In this fucntion we'll create todo object and save it in the database
@@ -44,7 +44,7 @@ class DataLayer {
         }
     }
     
-    /// In this fucntion we'll delete todo object and save it in the database
+    /// In this fucntion we'll delete todo object and remove it from the database
     ///
     /// - Parameters:
     ///     - todo: object of Todo Class

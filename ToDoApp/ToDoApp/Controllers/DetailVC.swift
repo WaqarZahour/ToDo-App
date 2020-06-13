@@ -91,8 +91,7 @@ class DetailVC: UIViewController {
 }
 
 extension DetailVC: UIPickerViewDelegate, UIPickerViewDataSource {
-    
-    // MARK: PickerView - Delegate and Datasource
+    // MARK: PickerView - Delegate and Data Source
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
         return priorities[row]
     }
